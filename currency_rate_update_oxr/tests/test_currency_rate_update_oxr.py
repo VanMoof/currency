@@ -59,11 +59,12 @@ class TestResCurrencyRateProviderOXR(common.TransactionCase):
         date = self.today - relativedelta(days=1)
         mocked_response = (
             """{
-    "rates": {
-        "EUR": 1.0,
-        "USD": 1.16
-    }
-}"""
+                "rates": {
+                    "EUR": 1.0,
+                    "USD": 1.16
+                 },
+                "timestamp": 1634311833
+            }"""
         )
         with mock.patch(
             _provider_class + '._oxr_provider_retrieve',
