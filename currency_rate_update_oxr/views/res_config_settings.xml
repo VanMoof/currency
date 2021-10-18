@@ -27,10 +27,10 @@
                         </div>
                     </div>
                     <div class="o_setting_left_pane">
-                        <field name="eod_rates"/>
+                        <field name="openexchangerates_eod_rates"/>
                     </div>
                     <div class="o_setting_right_pane">
-                        <label for="eod_rates"/>
+                        <label for="openexchangerates_eod_rates"/>
                     </div>
                 </div>
             </xpath>

@@ -4,6 +4,7 @@
 from dateutil.relativedelta import relativedelta
 from unittest import mock
 from urllib.error import HTTPError
+import json
 
 from odoo import fields
 from odoo.exceptions import UserError
@@ -101,3 +102,22 @@ class TestResCurrencyRateProviderOXR(common.TransactionCase):
                 self.today,
                 self.today,
             )
+
+    def test_wrong_rate(self):
+        """Receive today's rate when expecting yesterday's end-of-day rate."""
+        self.env.user.company_id.openexchangerates_eod_rates = True
+        date = self.today - relativedelta(days=1)
+        mocked_response = json.dumps({
+            "rates": {
+                "EUR": 1.0,
+                "USD": 1.16
+             },
+            "timestamp": int(date.strftime('%s'))
+        })
+
+        with mock.patch(
+            _provider_class + '._oxr_provider_retrieve',
+            return_value=mocked_response,
+        ):
+            with self.assertLogs(logger=None, level='WARNING'):
+                self.oxr_provider._update(date, date)

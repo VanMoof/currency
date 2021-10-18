@@ -38,7 +38,7 @@ class ResCurrencyRateProviderOXR(models.Model):
     @api.multi
     def _obtain_rates(self, base_currency, currencies, date_from, date_to):
         self.ensure_one()
-        eod_rates = self.company_id.eod_rates
+        eod_rates = self.company_id.openexchangerates_eod_rates
         if self.service != 'OXR':
             return super()._obtain_rates(base_currency, currencies, date_from,
                                          date_to)  # pragma: no cover
