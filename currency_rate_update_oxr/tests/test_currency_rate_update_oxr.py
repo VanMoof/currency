@@ -119,5 +119,6 @@ class TestResCurrencyRateProviderOXR(common.TransactionCase):
             _provider_class + '._oxr_provider_retrieve',
             return_value=mocked_response,
         ):
-            with self.assertLogs(logger=None, level='WARNING'):
+            with self.assertLogs(logger=None, level='WARNING') as log:
                 self.oxr_provider._update(date, date)
+            self.assertIn('Exchange rate from incorrect date received', log.output[0])
