@@ -10,7 +10,3 @@ class ResCompany(models.Model):
     openexchangerates_app_id = fields.Char(
         string='OpenExchangeRates.org App ID',
     )
-    openexchangerates_eod_rates = fields.Boolean(
-        string='End-of-day rates',
-        help='Yesterday\'s end-of-day rates will be used for today.',
-    )

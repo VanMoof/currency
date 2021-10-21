@@ -4,7 +4,6 @@
 from dateutil.relativedelta import relativedelta
 from unittest import mock
 from urllib.error import HTTPError
-import json
 
 from odoo import fields
 from odoo.exceptions import UserError
@@ -29,12 +28,10 @@ class TestResCurrencyRateProviderOXR(common.TransactionCase):
 
         self.today = fields.Date.today()
         self.eur_currency = self.env.ref('base.EUR')
-        self.usd_currency = self.env.ref('base.USD')
         self.oxr_provider = self.CurrencyRateProvider.create({
             'service': 'OXR',
             'currency_ids': [
                 (4, self.eur_currency.id),
-                (4, self.usd_currency.id),
             ],
         })
         self.CurrencyRate.search([]).unlink()
@@ -42,8 +39,7 @@ class TestResCurrencyRateProviderOXR(common.TransactionCase):
     def test_supported_currencies(self):
         mocked_response = (
             """{
-    "EUR": "Euro",
-    "USD": "United States Dollar"
+    "EUR": "Euro"
 }"""
         )
         supported_currencies = []
@@ -54,33 +50,26 @@ class TestResCurrencyRateProviderOXR(common.TransactionCase):
             supported_currencies = (
                 self.oxr_provider._get_supported_currencies()
             )
-        self.assertEqual(len(supported_currencies), 2)
+        self.assertEqual(len(supported_currencies), 1)
 
     def test_update(self):
         date = self.today - relativedelta(days=1)
         mocked_response = (
             """{
-                "rates": {
-                    "EUR": 1.0,
-                    "USD": 1.16
-                 },
-                "timestamp": 1634311833
-            }"""
-        )
+    "rates": {
+        "EUR": 0.832586
+    }
+}""" % {
+                'date': str(date),
+            })
         with mock.patch(
             _provider_class + '._oxr_provider_retrieve',
             return_value=mocked_response,
         ):
             self.oxr_provider._update(date, date)
 
-        if self.env.user.company_id.currency_id == self.eur_currency:
-            currency = self.usd_currency
-        else:
-            currency = self.eur_currency
-
-        # If the mocked currency is the same as the company currency it wil not be created.
         rates = self.CurrencyRate.search([
-            ('currency_id', '=', currency.id),
+            ('currency_id', '=', self.eur_currency.id),
         ], limit=1)
         self.assertTrue(rates)
 
@@ -102,23 +91,3 @@ class TestResCurrencyRateProviderOXR(common.TransactionCase):
                 self.today,
                 self.today,
             )
-
-    def test_wrong_rate(self):
-        """Receive today's rate when expecting yesterday's end-of-day rate."""
-        self.env.user.company_id.openexchangerates_eod_rates = True
-        date = self.today - relativedelta(days=1)
-        mocked_response = json.dumps({
-            "rates": {
-                "EUR": 1.0,
-                "USD": 1.16
-             },
-            "timestamp": int(date.strftime('%s'))
-        })
-
-        with mock.patch(
-            _provider_class + '._oxr_provider_retrieve',
-            return_value=mocked_response,
-        ):
-            with self.assertLogs(logger=None, level='WARNING') as log:
-                self.oxr_provider._update(date, date)
-            self.assertIn('Exchange rate from incorrect date received', log.output[0])
